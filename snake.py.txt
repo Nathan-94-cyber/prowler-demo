@@ -1,0 +1,140 @@
+import pygame
+import random
+import sys
+
+# Initialize pygame
+pygame.init()
+
+# Screen settings
+WIDTH = 600
+HEIGHT = 400
+CELL_SIZE = 20
+
+# Colors
+BLACK = (0, 0, 0)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+WHITE = (255, 255, 255)
+
+# Create screen
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Snake Game")
+
+# Clock
+clock = pygame.time.Clock()
+FPS = 10
+
+# Font
+font = pygame.font.SysFont(None, 35)
+
+# Snake setup
+snake = [(100, 100)]
+direction = (CELL_SIZE, 0)
+
+# Food setup
+food = (
+    random.randrange(0, WIDTH, CELL_SIZE),
+    random.randrange(0, HEIGHT, CELL_SIZE)
+)
+
+score = 0
+
+
+def draw_text(text, x, y):
+    img = font.render(text, True, WHITE)
+    screen.blit(img, (x, y))
+
+
+def spawn_food():
+    while True:
+        pos = (
+            random.randrange(0, WIDTH, CELL_SIZE),
+            random.randrange(0, HEIGHT, CELL_SIZE)
+        )
+
+        if pos not in snake:
+            return pos
+
+
+running = True
+
+while running:
+    screen.fill(BLACK)
+
+    # Events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+        if event.type == pygame.KEYDOWN:
+
+            if event.key == pygame.K_UP and direction != (0, CELL_SIZE):
+                direction = (0, -CELL_SIZE)
+
+            elif event.key == pygame.K_DOWN and direction != (0, -CELL_SIZE):
+                direction = (0, CELL_SIZE)
+
+            elif event.key == pygame.K_LEFT and direction != (CELL_SIZE, 0):
+                direction = (-CELL_SIZE, 0)
+
+            elif event.key == pygame.K_RIGHT and direction != (-CELL_SIZE, 0):
+                direction = (CELL_SIZE, 0)
+
+    # Move snake
+    head_x, head_y = snake[0]
+    dx, dy = direction
+
+    new_head = (head_x + dx, head_y + dy)
+
+    # Collision with walls
+    if (
+        new_head[0] < 0
+        or new_head[0] >= WIDTH
+        or new_head[1] < 0
+        or new_head[1] >= HEIGHT
+    ):
+        running = False
+
+    # Collision with itself
+    if new_head in snake:
+        running = False
+
+    snake.insert(0, new_head)
+
+    # Food eaten
+    if new_head == food:
+        score += 1
+        food = spawn_food()
+    else:
+        snake.pop()
+
+    # Draw snake
+    for segment in snake:
+        pygame.draw.rect(
+            screen,
+            GREEN,
+            (segment[0], segment[1], CELL_SIZE, CELL_SIZE)
+        )
+
+    # Draw food
+    pygame.draw.rect(
+        screen,
+        RED,
+        (food[0], food[1], CELL_SIZE, CELL_SIZE)
+    )
+
+    draw_text(f"Score: {score}", 10, 10)
+
+    pygame.display.update()
+    clock.tick(FPS)
+
+# Game over screen
+screen.fill(BLACK)
+draw_text("Game Over", 220, 150)
+draw_text(f"Final Score: {score}", 210, 200)
+
+pygame.display.update()
+pygame.time.wait(3000)
+
+pygame.quit()
